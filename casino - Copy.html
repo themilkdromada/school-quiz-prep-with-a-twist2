@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>school test prep with a twist</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; }
+    h1 { color: gold; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+    #output { margin-top: 20px; white-space: pre-line; font-size: 18px; min-height: 120px; }
+    #scoreboard { margin-top: 30px; border-top: 2px solid gold; padding-top: 10px; }
+    input, select { padding: 6px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>school test prep with a twist</h1>
+
+  <p>Enter your rank (1–10):
+    <input id="rank" type="number" min="1" max="10" value="1">
+  </p>
+
+  <p>
+    <button onclick="play('slot')">Slot Machine</button>
+    <button onclick="play('blackjack')">Blackjack</button>
+    <button onclick="play('plinko')">Plinko</button>
+    <button onclick="play('roulette')">Roulette</button>
+    <button onclick="play('math')">Math Duel</button>
+    <button onclick="play('pyramid')">Math Pyramid</button>
+    <button onclick="play('wheel')">Wheel of 100</button>
+  </p>
+
+  <p>
+    Mode:
+    <select id="mode">
+      <option value="normal">Normal</option>
+      <option value="rigged">Rigged (Rank 6+)</option>
+    </select>
+  </p>
+
+  <div id="output">Choose a game to begin.</div>
+
+  <div id="scoreboard">
+    <h2>📊 Scoreboard</h2>
+    <p>Wins: <span id="wins">0</span> | Losses: <span id="losses">0</span> | Total Games: <span id="total">0</span></p>
+  </div>
+
+  <script>
+    // Scoreboard state
+    let wins = 0, losses = 0, total = 0;
+
+    function updateScoreboard(result) {
+      total++;
+      if (result === "win") wins++;
+      if (result === "loss") losses++;
+      document.getElementById('wins').innerText = wins;
+      document.getElementById('losses').innerText = losses;
+      document.getElementById('total').innerText = total;
+    }
+
+    function canRig() {
+      const rank = parseInt(document.getElementById('rank').value);
+      return rank >= 6;
+    }
+
+    function play(game) {
+      const mode = document.getElementById('mode').value;
+      const rigged = (mode === "rigged" && canRig());
+      let out = "";
+      let result = "loss"; // default result
+
+      if (mode === "rigged" && !canRig()) {
+        out = "❌ Rigged mode locked. Rank 6+ required.";
+        document.getElementById('output').innerText = out;
+        return;
+      }
+
+      switch (game) {
+        case "slot":
+          if (rigged) {
+            out = "[ 💎 | 💎 | 💎 ]\n🎰 JACKPOT!";
+            result = "win";
+          } else {
+            const symbols = ["💎","🍒","🔔","🍋","7️⃣"];
+            const r = [
+              symbols[Math.floor(Math.random()*symbols.length)],
+              symbols[Math.floor(Math.random()*symbols.length)],
+              symbols[Math.floor(Math.random()*symbols.length)]
+            ];
+            out = `[ ${r[0]} | ${r[1]} | ${r[2]} ]`;
+            if (r[0] === "💎" && r[1] === "💎" && r[2] === "💎") {
+              out += "\n🎰 JACKPOT! 💎💎💎";
+              result = "win";
+            } else {
+              out += "\n💨 No jackpot this time.";
+            }
+          }
+          break;
+
+        case "blackjack":
+          if (rigged) {
+            out = "🃏 Your hand: 21\n🃏 Dealer busts → WIN!";
+            result = "win";
+          } else {
+            const player = Math.floor(Math.random() * 11) + 10; // 10–21
+            const dealer = Math.floor(Math.random() * 11) + 10;
+            out = `🃏 You: ${player}\n🃏 Dealer: ${dealer}`;
+            if (player > 21) {
+              out += "\n💥 You bust!";
+            } else if (dealer > 21 || player > dealer) {
+              out += "\n🎉 You win!";
+              result = "win";
+            } else if (player === dealer) {
+              out += "\n🤝 Tie.";
+            } else {
+              out += "\n👎 Dealer wins.";
+            }
+          }
+          break;
+
+        case "plinko":
+          if (rigged) {
+            out = "🔽 Dropping chip...\n💥 Lands in Jackpot!\n🎉 WIN!";
+            result = "win";
+          } else {
+            const slots = ["Lose","Small Win","Medium Win","Jackpot","Small Win","Lose"];
+            const drop = slots[Math.floor(Math.random()*slots.length)];
+            out = "🔽 Dropping chip...\n💥 Lands in: " + drop;
+            if (drop === "Jackpot" || drop.includes("Win")) result = "win";
+          }
+          break;
+
+        case "roulette":
+          if (rigged) {
+            out = "🎯 You bet on: 7\n🎡 Wheel lands on: 7\n🎉 WIN!";
+            result = "win";
+          } else {
+            const betStr = prompt("🎯 Place your bet (0–36):");
+            const bet = parseInt(betStr);
+            if (isNaN(bet) || bet < 0 || bet > 36) {
+              out = "❌ Invalid bet.";
+              break;
+            }
+            const spin = Math.floor(Math.random()*37);
+            out = `🎡 Wheel lands on: ${spin}`;
+            if (bet === spin) {
+              out += "\n🎉 JACKPOT!";
+              result = "win";
+            } else {
+              out += "\n💨 Try again...";
+            }
+          }
+          break;
+
+        case "math":
+          if (rigged) {
+            out = "🧠 Solve: 5+5=10\n🎉 Correct! WIN!";
+            result = "win";
+          } else {
+            const a = Math.floor(Math.random()*10) + 1;
+            const b = Math.floor(Math.random()*10) + 1;
+            const ans = a + b;
+            const guessStr = prompt(`🧠 Solve: ${a}+${b}=?`);
+            const guess = parseInt(guessStr);
+            if (guess === ans) {
+              out = "🎉 Correct!";
+              result = "win";
+            } else {
+              out = `❌ Wrong. Answer was ${ans}.`;
+            }
+          }
+          break;
+
+        case "pyramid":
+          if (rigged) {
+            out = "🔺 Math Pyramid: House Member climbs straight to the top!\n🏆 Badge: Mind Ascendant";
+            result = "win";
+          } else {
+            let level = 1, max = 10;
+            out = "🔺 Math Pyramid\n";
+            while (level <= max) {
+              const a = Math.floor(Math.random()*10) + 1;
+              const b = Math.floor(Math.random()*10) + 1;
+              const ans = a + b;
+              const guessStr = prompt(`Level ${level}: Solve ${a}+${b}=?`);
+              const guess = parseInt(guessStr);
+
+              if (guess === ans) {
+                const chance = 1 - ((level - 1) * 0.1); // 100% -> 10%
+                const roll = Math.random();
+                if (roll <= chance) {
+                  out += `Level ${level}: Correct! (Chance ${Math.round(chance*100)}%)\n`;
+                  level++;
+                } else {
+                  out += `Level ${level}: Correct but failed luck check (Chance ${Math.round(chance*100)}%)\n💥 Fell to Level 0.`;
+                  break;
+                }
+              } else {
+                out += `Level ${level}: Wrong! Answer was ${ans}\n💥 Fell to Level 0.`;
+                break;
+              }
+            }
+            if (level > max) {
+              out += "\n🏆 You reached the top! Badge: Mind Ascendant";
+              result = "win";
+            }
+          }
+          break;
+
+        case "wheel":
+          if (rigged) {
+            out = "🎯 You bet on: 100\n🎡 Wheel lands on: 100\n🎉 WIN!";
+            result = "win";
+          } else {
+            const betStr = prompt("🎯 Place your bet (1–100):");
+            const bet = parseInt(betStr);
+            if (isNaN(bet) || bet < 1 || bet > 100) {
+              out = "❌ Invalid bet.";
+              break;
+            }
+            const spin = Math.floor(Math.random()*100) + 1;
+            out = `🎡 Wheel lands on: ${spin}`;
+            if (bet === spin) {
+              out += "\n🏆 JACKPOT!";
+              result = "win";
+            } else if (Math.abs(bet - spin) <= 5) {
+              out += "\n💎 So close!";
+            } else {
+              out += "\n💨 Missed it.";
+            }
+          }
+          break;
+
+        default:
+          out = "❌ Unknown game.";
+      }
+
+      document.getElementById('output').innerText = out;
+      updateScoreboard(result);
+    }
+  </script>
+</body>
+</html>
